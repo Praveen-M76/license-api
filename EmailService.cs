@@ -1,43 +1,34 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
 
 namespace LicenseApi
 {
     public class EmailService
     {
-        public bool SendVerificationCode(string toEmail, string code, out string errorMessage)
+        public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            errorMessage = string.Empty;
+            var fromEmail = "praveenmathu20@gmail.com"; // your gmail
+            var appPassword = "ivaeqxaaasktnyoo"; // your app password (no spaces)
 
-            try
+            var smtp = new SmtpClient("smtp.gmail.com")
             {
-                var fromEmail = "praveenmathu20@gmail.com";
-                var appPassword = "vlabotqvdjhjotzm";
+                Port = 587,
+                Credentials = new NetworkCredential(fromEmail, appPassword),
+                EnableSsl = true,
+                Timeout = 20000
+            };
 
-                using (var client = new SmtpClient("smtp.gmail.com", 587))
-                {
-                    client.Credentials = new NetworkCredential(fromEmail, appPassword);
-                    client.EnableSsl = true;
-
-                    var mail = new MailMessage();
-                    mail.From = new MailAddress(fromEmail);
-                    mail.To.Add(toEmail);
-                    mail.Subject = "Your Trial Verification Code";
-                    mail.Body =
-                        "Your verification code is: " + code + "\n\n" +
-                        "Use this code to claim your 7-day free trial.\n" +
-                        "This code expires in 10 minutes.";
-
-                    client.Send(mail);
-                }
-
-                return true;
-            }
-            catch (System.Exception ex)
+            var message = new MailMessage
             {
-                errorMessage = ex.Message;
-                return false;
-            }
+                From = new MailAddress(fromEmail),
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = false
+            };
+
+            message.To.Add(toEmail);
+
+            await smtp.SendMailAsync(message);
         }
     }
 }
