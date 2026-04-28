@@ -1,6 +1,6 @@
 using System;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
+using System.Text;
 
 namespace LicenseApi
 {
@@ -12,30 +12,40 @@ namespace LicenseApi
 
             try
             {
-                var fromEmail = "praveenmathu20@gmail.com";   // your verified sender
-                var smtpLogin = "a98035001@smtp-brevo.com";   // from Brevo
+                var apiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY");
 
-                var smtpPassword = Environment.GetEnvironmentVariable("SMTP_KEY");
-
-                if (string.IsNullOrWhiteSpace(smtpPassword))
+                if (string.IsNullOrWhiteSpace(apiKey))
                 {
-                    errorMessage = "SMTP_KEY missing in Railway.";
+                    errorMessage = "BREVO_API_KEY missing.";
                     return false;
                 }
 
-                using (var client = new SmtpClient("smtp-relay.brevo.com", 2525)) // ✅ IMPORTANT
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("api-key", apiKey);
+
+                var json = $@"
+{{
+  ""sender"": {{
+    ""name"": ""IGCompareTool"",
+    ""email"": ""praveenmathu20@gmail.com""
+  }},
+  ""to"": [
+    {{
+      ""email"": ""{toEmail}""
+    }}
+  ],
+  ""subject"": ""Verification Code"",
+  ""htmlContent"": ""<h3>Your code: {code}</h3>""
+}}";
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = client.PostAsync("https://api.brevo.com/v3/smtp/email", content).Result;
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    client.Credentials = new NetworkCredential(smtpLogin, smtpPassword);
-                    client.EnableSsl = true;
-                    client.Timeout = 100000;
-
-                    var mail = new MailMessage();
-                    mail.From = new MailAddress(fromEmail, "IGCompareTool");
-                    mail.To.Add(toEmail);
-                    mail.Subject = "Your Trial Verification Code";
-                    mail.Body = "Your verification code is: " + code;
-
-                    client.Send(mail);
+                    errorMessage = response.Content.ReadAsStringAsync().Result;
+                    return false;
                 }
 
                 return true;
