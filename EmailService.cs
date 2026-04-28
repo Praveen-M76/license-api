@@ -14,11 +14,11 @@ namespace LicenseApi
                 var fromEmail = "praveenmathu20@gmail.com";
                 var appPassword = "ivaeqxaaasktnyoo";
 
-                using (var client = new SmtpClient("smtp.gmail.com", 587))
-                {
-                    client.Credentials = new NetworkCredential(fromEmail, appPassword);
-                    client.EnableSsl = true;
-
+               using (var client = new SmtpClient("smtp.gmail.com", 465))
+{
+    client.Credentials = new NetworkCredential(fromEmail, appPassword);
+    client.EnableSsl = true;
+    client.Timeout = 60000;
                     var mail = new MailMessage();
                     mail.From = new MailAddress(fromEmail);
                     mail.To.Add(toEmail);
