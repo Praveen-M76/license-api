@@ -5,30 +5,36 @@ namespace LicenseApi
 {
     public class EmailService
     {
-        public async Task SendEmailAsync(string toEmail, string subject, string body)
+        public bool SendVerificationCode(string toEmail, string code, out string errorMessage)
         {
-            var fromEmail = "praveenmathu20@gmail.com"; // your gmail
-            var appPassword = "ivaeqxaaasktnyoo"; // your app password (no spaces)
+            errorMessage = string.Empty;
 
-            var smtp = new SmtpClient("smtp.gmail.com")
+            try
             {
-                Port = 587,
-                Credentials = new NetworkCredential(fromEmail, appPassword),
-                EnableSsl = true,
-                Timeout = 20000
-            };
+                var fromEmail = "praveenmathu20@gmail.com";
+                var appPassword = "ivaeqxaaasktnyoo";
 
-            var message = new MailMessage
+                using (var client = new SmtpClient("smtp.gmail.com", 587))
+                {
+                    client.Credentials = new NetworkCredential(fromEmail, appPassword);
+                    client.EnableSsl = true;
+
+                    var mail = new MailMessage();
+                    mail.From = new MailAddress(fromEmail);
+                    mail.To.Add(toEmail);
+                    mail.Subject = "Your Trial Verification Code";
+                    mail.Body = "Your verification code is: " + code;
+
+                    client.Send(mail);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
             {
-                From = new MailAddress(fromEmail),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = false
-            };
-
-            message.To.Add(toEmail);
-
-            await smtp.SendMailAsync(message);
+                errorMessage = ex.Message;
+                return false;
+            }
         }
     }
 }
