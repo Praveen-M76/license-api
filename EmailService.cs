@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Mail;
 
@@ -11,14 +12,21 @@ namespace LicenseApi
 
             try
             {
-                var fromEmail = "praveenmathu20@gmail.com";
-                var appPassword = "ivaeqxaaasktnyoo";
+                var fromEmail = "a98035001@smtp-brevo.com";
+               var smtpPassword = Environment.GetEnvironmentVariable("SMTP_KEY");
 
-               using (var client = new SmtpClient("smtp.gmail.com", 465))
-{
-    client.Credentials = new NetworkCredential(fromEmail, appPassword);
-    client.EnableSsl = true;
-    client.Timeout = 60000;
+                if (string.IsNullOrWhiteSpace(smtpPassword))
+                {
+                    errorMessage = "SMTP_KEY is missing in Railway Variables.";
+                    return false;
+                }
+
+                using (var client = new SmtpClient("smtp-relay.brevo.com", 587))
+                {
+                    client.Credentials = new NetworkCredential(fromEmail, smtpPassword);
+                    client.EnableSsl = true;
+                    client.Timeout = 60000;
+
                     var mail = new MailMessage();
                     mail.From = new MailAddress(fromEmail);
                     mail.To.Add(toEmail);
